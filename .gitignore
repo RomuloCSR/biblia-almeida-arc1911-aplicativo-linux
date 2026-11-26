@@ -1,0 +1,8 @@
+# Arquivos temporários da compilação
+build/
+
+# Dados de cada usuário (onde parou, letra, tema) - não vão para o GitHub
+dados/
+
+# Programa gerado pelo compilar.sh
+biblia

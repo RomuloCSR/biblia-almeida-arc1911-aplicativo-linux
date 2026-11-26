@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bíblia Almeida ARC-1911</title>
+<style>
+  :root {
+    --topo: #2C3E50; --topo-texto: #FFFFFF; --ouro: #F7DC6F; --topo-sub: #EAECEE;
+    --barra: #EAECEE; --papel: #FAF8F5; --texto: #1C2833; --numero: #6200EE;
+    --roxo: #6200EE; --roxo-texto: #FFFFFF; --roxo-hover: #4B00C2;
+    --marca: rgba(98, 0, 238, 0.12); --sombra: rgba(0, 0, 0, 0.18); --painel: #FFFFFF;
+    --fonte: 20px;
+  }
+  [data-tema="sepia"] {
+    --papel: #F4ECD8; --texto: #3B2F1E; --barra: #E8DCC2; --painel: #FBF5E6;
+    --numero: #5A00D6;
+  }
+  [data-tema="escuro"] {
+    --topo: #15202B; --barra: #24272C; --papel: #1B1D21; --texto: #E6E6E6;
+    --numero: #BB86FC; --roxo: #BB86FC; --roxo-texto: #1B0A33; --roxo-hover: #D3B3FD;
+    --marca: rgba(187, 134, 252, 0.18); --sombra: rgba(0, 0, 0, 0.5); --painel: #24272C;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    font-family: "Ubuntu", "Cantarell", "Noto Sans", "DejaVu Sans", system-ui, sans-serif;
+    background: var(--papel); color: var(--texto);
+    -webkit-user-select: none; user-select: none;
+  }
+
+  /* ---------- Topo ---------- */
+  header {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--topo); color: var(--topo-texto); padding: 12px 16px;
+  }
+  header .info { flex: 1; min-width: 0; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 700; }
+  header .edicao { color: var(--ouro); font-size: 12.5px; font-weight: 700; margin-top: 2px; }
+  header .onde { color: var(--topo-sub); font-size: 13.5px; margin-top: 3px; }
+
+  button {
+    font: inherit; border: 0; cursor: pointer; border-radius: 8px;
+    background: var(--roxo); color: var(--roxo-texto);
+    min-height: 44px; padding: 0 12px; font-weight: 700; letter-spacing: .3px;
+    text-transform: uppercase; font-size: 13.5px;
+    box-shadow: 0 1px 3px var(--sombra);
+    transition: background .12s, transform .06s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  button:hover { background: var(--roxo-hover); }
+  button:active { transform: scale(.97); }
+  button:focus-visible { outline: 3px solid var(--ouro); outline-offset: 2px; }
+  .icone { width: 44px; padding: 0; font-size: 19px; text-transform: none; }
+  /* "i" dentro de um círculo, desenhado com CSS (nem toda fonte do Linux tem o símbolo ⓘ) */
+  .info-i {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border: 2px solid currentColor; border-radius: 50%;
+    font-size: 14px; font-weight: 700; font-family: Georgia, serif; line-height: 1;
+  }
+
+  /* ---------- Seletores ---------- */
+  .seletores, footer {
+    display: flex; gap: 6px; padding: 8px; background: var(--barra);
+  }
+  .seletores button:nth-child(1) { flex: .75; }
+  .seletores button:nth-child(2) { flex: 1.85; }
+  .seletores button:nth-child(3) { flex: 1; }
+  footer button { flex: 1; }
+  footer .meio { flex: .7; }
+
+  /* ---------- Leitura ---------- */
+  main { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+  #texto {
+    max-width: 46em; margin: 0 auto; padding: 18px 22px 40px;
+    font-size: var(--fonte); line-height: 1.6;
+    -webkit-user-select: text; user-select: text;
+  }
+  #texto p { margin: 0 0 .9em; padding: 2px 6px; border-radius: 6px; cursor: pointer; }
+  #texto p.marcado { background: var(--marca); }
+  #texto .num { color: var(--numero); font-weight: 700; font-size: .85em; margin-right: 4px; }
+  #texto .sub { font-style: italic; opacity: .85; cursor: default; }
+  #texto .erro { color: #C0392B; }
+
+  /* ---------- Painéis (livros, capítulos, sobre) ---------- */
+  .fundo {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10;
+  }
+  .fundo.aberto { display: flex; }
+  .painel {
+    background: var(--painel); color: var(--texto); border-radius: 14px;
+    width: min(900px, 100%); max-height: 100%; display: flex; flex-direction: column;
+    box-shadow: 0 10px 40px var(--sombra); overflow: hidden;
+  }
+  .painel .cab {
+    display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+    background: var(--topo); color: var(--topo-texto);
+  }
+  .painel .cab h2 { flex: 1; margin: 0; font-size: 17px; }
+  .painel .abas { display: flex; gap: 6px; padding: 10px 14px 0; }
+  .painel .abas button { flex: 1; background: var(--barra); color: var(--texto); box-shadow: none; }
+  .painel .abas button.ativa { background: var(--roxo); color: var(--roxo-texto); }
+  .grade { display: grid; gap: 8px; padding: 14px; overflow-y: auto; }
+  .grade.livros { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .grade.caps { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); }
+  .grade button { text-transform: none; font-size: 15px; }
+  .grade.enviar { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .grade.enviar button { min-height: 56px; font-size: 16px; }
+  .dica { padding: 0 16px 16px; font-size: 14px; opacity: .8; }
+  .dica kbd { background: var(--barra); border-radius: 4px; padding: 1px 6px; font-family: inherit; }
+  .grade button.atual { outline: 3px solid var(--ouro); outline-offset: -3px; }
+  .sobre { padding: 18px 20px; line-height: 1.6; font-size: 15.5px; }
+  .sobre .acoes { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .sobre kbd {
+    background: var(--barra); border-radius: 4px; padding: 1px 6px; font-family: inherit; font-size: .9em;
+  }
+
+  /* ---------- Aviso rápido ---------- */
+  #aviso {
+    position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
+    background: var(--topo); color: #fff; padding: 10px 18px; border-radius: 999px;
+    font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20;
+  }
+  #aviso.visivel { opacity: .95; }
+
+  @media (max-width: 520px) {
+    button { font-size: 12px; padding: 0 6px; }
+    header h1 { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="info">
+      <h1>Bíblia Almeida ARC-1911</h1>
+      <div class="edicao">Atualização ortográfica e gramatical • Edição 11/2026</div>
+      <div class="onde" id="onde">Carregando...</div>
+    </div>
+    <button class="icone" id="btnTema" title="Tema: claro, sépia ou escuro">◐</button>
+    <button class="icone" id="btnSobre" title="Sobre o projeto"><span class="info-i">i</span></button>
+  </header>
+
+  <div class="seletores">
+    <button id="btnTestamento" title="Trocar Antigo / Novo Testamento">AT</button>
+    <button id="btnLivro" title="Escolher o livro">—</button>
+    <button id="btnCapitulo" title="Escolher o capítulo">Cap. 1</button>
+  </div>
+
+  <main id="leitura"><div id="texto"></div></main>
+
+  <footer>
+    <button id="btnAnt" title="Capítulo anterior (←)">‹ Ant.</button>
+    <button id="btnMenor" class="meio" title="Letra menor (Ctrl −)">A−</button>
+    <button id="btnMaior" class="meio" title="Letra maior (Ctrl +)">A+</button>
+    <button id="btnEnviar" title="Enviar ou copiar o capítulo ou os versículos marcados">Enviar</button>
+    <button id="btnProx" title="Próximo capítulo (→)">Próx. ›</button>
+  </footer>
+
+  <div class="fundo" id="fundoLivros">
+    <div class="painel">
+      <div class="cab"><h2>Escolha o livro</h2><button class="icone" data-fechar>✕</button></div>
+      <div class="abas">
+        <button id="abaAT">Antigo Testamento</button>
+        <button id="abaNT">Novo Testamento</button>
+      </div>
+      <div class="grade livros" id="gradeLivros"></div>
+    </div>
+  </div>
+
+  <div class="fundo" id="fundoCaps">
+    <div class="painel">
+      <div class="cab"><h2 id="tituloCaps">Capítulos</h2><button class="icone" data-fechar>✕</button></div>
+      <div class="grade caps" id="gradeCaps"></div>
+    </div>
+  </div>
+
+  <div class="fundo" id="fundoSobre">
+    <div class="painel" style="width:min(560px,100%)">
+      <div class="cab"><h2>Sobre o Projeto</h2><button class="icone" data-fechar>✕</button></div>
+      <div class="sobre">
+        <b>Bíblia Almeida ARC-1911</b><br>
+        Atualização ortográfica e gramatical • Edição 11/2026<br><br>
+        • Funciona 100% offline, com os 66 livros.<br>
+        • Motor de alta velocidade em linguagem C.<br>
+        • Texto de domínio público.<br><br>
+        <b>Atalhos:</b> <kbd>←</kbd> <kbd>→</kbd> troca o capítulo ·
+        <kbd>Ctrl</kbd> + <kbd>+</kbd> / <kbd>−</kbd> muda a letra ·
+        clique num versículo para marcar e enviar só ele.<br><br>
+        Projeto aberto e contribuições: github.com/RomuloCSR
+        <div class="acoes">
+          <button id="btnGithub">Abrir GitHub</button>
+          <button data-fechar>Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fundo" id="fundoEnviar">
+    <div class="painel" style="width:min(520px,100%)">
+      <div class="cab"><h2 id="tituloEnviar">Enviar</h2><button class="icone" data-fechar>✕</button></div>
+      <div class="grade enviar">
+        <button data-destino="whatsapp">WhatsApp</button>
+        <button data-destino="telegram">Telegram</button>
+        <button data-destino="email">E-mail</button>
+        <button data-destino="x">X (Twitter)</button>
+        <button data-destino="copiar">Copiar</button>
+      </div>
+      <div class="dica">O texto também é copiado. Se precisar, cole com <kbd>Ctrl</kbd> + <kbd>V</kbd>.</div>
+    </div>
+  </div>
+
+  <div id="aviso"></div>
+
+<script>
+(function () {
+  "use strict";
+  var ponte = window.chrome && window.chrome.webview;
+  var L = { at: [], nt: [] };
+  var E = { t: 1, b: 0, c: 1, fonte: 20, tema: "claro" };
+  var atual = null;        /* último capítulo recebido */
+  var marcados = {};       /* versículos marcados: { "3": true } */
+  var abaLivros = 1;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function enviar(s) { if (ponte) ponte.postMessage(s); }
+  function livros(t) { return (t || E.t) === 1 ? L.at : L.nt; }
+  function nomeLivro() { var l = livros()[E.b]; return l ? l.n : ""; }
+  function salvar() { enviar("salvar|" + E.t + "|" + E.b + "|" + E.c + "|" + E.fonte + "|" + E.tema); }
+
+  function aviso(txt) {
+    var a = $("aviso");
+    a.textContent = txt;
+    a.classList.add("visivel");
+    clearTimeout(aviso.t);
+    aviso.t = setTimeout(function () { a.classList.remove("visivel"); }, 1600);
+  }
+
+  /* ---------- Abrir e mostrar capítulo ---------- */
+  function abrir(t, b, c) {
+    var lista = livros(t);
+    if (!lista[b] || c < 1 || c > lista[b].c) return;
+    E.t = t; E.b = b; E.c = c;
+    enviar("cap|" + t + "|" + b + "|" + c);
+    salvar();
+  }
+
+  function mostrar(m) {
+    atual = m;
+    marcados = {};
+    var nome = nomeLivro();
+    $("onde").textContent = nome + " • Capítulo " + E.c;
+    $("btnTestamento").textContent = E.t === 1 ? "AT" : "NT";
+    $("btnLivro").textContent = nome;
+    $("btnCapitulo").textContent = "Cap. " + E.c;
+
+    var caixa = $("texto");
+    caixa.textContent = "";
+    if (m.erro) {
+      var pe = document.createElement("p");
+      pe.className = "erro";
+      pe.textContent = m.erro;
+      caixa.appendChild(pe);
+    }
+    m.versos.forEach(function (v) {
+      var p = document.createElement("p");
+      if (v.s !== undefined) {
+        p.className = "sub";
+        p.textContent = "(" + v.s + ")";
+      } else {
+        p.dataset.n = v.n;
+        var n = document.createElement("span");
+        n.className = "num";
+        n.textContent = "[" + v.n + "]";
+        p.appendChild(n);
+        p.appendChild(document.createTextNode(v.t));
+      }
+      caixa.appendChild(p);
+    });
+    var area = $("leitura");
+    area.style.scrollBehavior = "auto";
+    area.scrollTop = 0;
+    area.style.scrollBehavior = "";
+  }
+
+  /* ---------- Navegação (igual ao Android) ---------- */
+  function proximo() {
+    var lista = livros();
+    if (E.c < lista[E.b].c) return abrir(E.t, E.b, E.c + 1);
+    if (E.b + 1 < lista.length) return abrir(E.t, E.b + 1, 1);
+    if (E.t === 1) return abrir(2, 0, 1);
+    aviso("Fim de Apocalipse");
+  }
+  function anterior() {
+    if (E.c > 1) return abrir(E.t, E.b, E.c - 1);
+    if (E.b > 0) return abrir(E.t, E.b - 1, livros()[E.b - 1].c);
+    if (E.t === 2) return abrir(1, 38, L.at[38].c);
+    aviso("Início de Gênesis");
+  }
+
+  /* ---------- Letra e tema ---------- */
+  function aplicarFonte() { document.documentElement.style.setProperty("--fonte", E.fonte + "px"); }
+  function fonte(d) {
+    var n = Math.max(14, Math.min(40, E.fonte + d));
+    if (n === E.fonte) return;
+    E.fonte = n; aplicarFonte(); salvar();
+  }
+  function aplicarTema() { document.documentElement.setAttribute("data-tema", E.tema); }
+  function trocarTema() {
+    var ordem = ["claro", "sepia", "escuro"];
+    E.tema = ordem[(ordem.indexOf(E.tema) + 1) % 3];
+    aplicarTema(); salvar();
+    aviso(E.tema === "claro" ? "Tema claro" : E.tema === "sepia" ? "Tema sépia" : "Tema escuro");
+  }
+
+  /* ---------- Enviar / Copiar ---------- */
+  function montarTexto() {
+    if (!atual) return null;
+    var nums = Object.keys(marcados);
+    var linhas = [];
+    atual.versos.forEach(function (v) {
+      if (v.s !== undefined) { if (!nums.length) linhas.push("(" + v.s + ")"); return; }
+      if (!nums.length || marcados[v.n]) linhas.push("[" + v.n + "] " + v.t);
+    });
+    var ref = nomeLivro() + " " + E.c;
+    if (nums.length) {
+      nums.sort(function (a, b) { return a - b; });
+      ref += ":" + nums.join(",");
+    }
+    var texto = ref + "\n\n" + linhas.join("\n\n") +
+      "\n\n—\nBíblia Almeida ARC-1911\nAtualização ortográfica e gramatical • Edição 11/2026\n" +
+      "Projeto aberto: https://github.com/RomuloCSR";
+    return { ref: ref, texto: texto, versos: nums.length };
+  }
+  function painelEnviar() {
+    var m = montarTexto();
+    if (!m) return;
+    $("tituloEnviar").textContent = "Enviar " + m.ref;
+    abrirPainel("fundoEnviar");
+  }
+  function enviarPara(destino) {
+    var m = montarTexto();
+    if (!m) return;
+    fecharPaineis();
+    if (destino === "copiar") {
+      enviar("copiar|" + m.texto);
+      aviso(m.versos ? "Versículos copiados" : "Capítulo copiado");
+    } else {
+      enviar("enviar|" + destino + "|" + m.ref.replace(/\|/g, " ") + "|" + m.texto);
+      aviso("Abrindo... o texto também foi copiado");
+    }
+  }
+
+  /* ---------- Painéis ---------- */
+  function abrirPainel(id) { $(id).classList.add("aberto"); }
+  function fecharPaineis() {
+    document.querySelectorAll(".fundo.aberto").forEach(function (f) { f.classList.remove("aberto"); });
+  }
+  function painelLivros(t) {
+    abaLivros = t;
+    $("abaAT").classList.toggle("ativa", t === 1);
+    $("abaNT").classList.toggle("ativa", t === 2);
+    var g = $("gradeLivros");
+    g.textContent = "";
+    livros(t).forEach(function (l, i) {
+      var b = document.createElement("button");
+      b.textContent = l.n;
+      if (t === E.t && i === E.b) b.className = "atual";
+      b.onclick = function () {
+        fecharPaineis();
+        E.t = t; E.b = i;
+        painelCaps();
+      };
+      g.appendChild(b);
+    });
+    abrirPainel("fundoLivros");
+  }
+  function painelCaps() {
+    var l = livros()[E.b];
+    $("tituloCaps").textContent = l.n;
+    var g = $("gradeCaps");
+    g.textContent = "";
+    for (var c = 1; c <= l.c; c++) {
+      (function (c) {
+        var b = document.createElement("button");
+        b.textContent = c;
+        if (c === E.c && atual && atual.t === E.t && atual.b === E.b) b.className = "atual";
+        b.onclick = function () { fecharPaineis(); abrir(E.t, E.b, c); };
+        g.appendChild(b);
+      })(c);
+    }
+    abrirPainel("fundoCaps");
+  }
+
+  /* ---------- Botões ---------- */
+  $("btnProx").onclick = proximo;
+  $("btnAnt").onclick = anterior;
+  $("btnMaior").onclick = function () { fonte(2); };
+  $("btnMenor").onclick = function () { fonte(-2); };
+  $("btnEnviar").onclick = painelEnviar;
+  document.querySelectorAll("[data-destino]").forEach(function (b) {
+    b.onclick = function () { enviarPara(b.dataset.destino); };
+  });
+  $("btnTema").onclick = trocarTema;
+  $("btnSobre").onclick = function () { abrirPainel("fundoSobre"); };
+  $("btnGithub").onclick = function () { enviar("abrir|github"); };
+  $("btnTestamento").onclick = function () { abrir(E.t === 1 ? 2 : 1, 0, 1); };
+  $("btnLivro").onclick = function () { painelLivros(E.t); };
+  $("btnCapitulo").onclick = painelCaps;
+  $("abaAT").onclick = function () { painelLivros(1); };
+  $("abaNT").onclick = function () { painelLivros(2); };
+  document.querySelectorAll("[data-fechar]").forEach(function (b) { b.onclick = fecharPaineis; });
+  document.querySelectorAll(".fundo").forEach(function (f) {
+    f.addEventListener("click", function (e) { if (e.target === f) fecharPaineis(); });
+  });
+
+  /* Clique no versículo: marca / desmarca (para copiar só ele) */
+  $("texto").addEventListener("click", function (e) {
+    if (window.getSelection && String(window.getSelection()).length) return;
+    var p = e.target.closest("p[data-n]");
+    if (!p) return;
+    var n = p.dataset.n;
+    if (marcados[n]) { delete marcados[n]; p.classList.remove("marcado"); }
+    else { marcados[n] = true; p.classList.add("marcado"); }
+  });
+
+  /* ---------- Teclado ---------- */
+  document.addEventListener("keydown", function (e) {
+    var painelAberto = document.querySelector(".fundo.aberto");
+    if (e.key === "Escape") { fecharPaineis(); return; }
+    if (e.ctrlKey && (e.key === "+" || e.key === "=")) { e.preventDefault(); fonte(2); return; }
+    if (e.ctrlKey && (e.key === "-" || e.key === "_")) { e.preventDefault(); fonte(-2); return; }
+    if (e.ctrlKey && e.key === "0") { e.preventDefault(); E.fonte = 20; aplicarFonte(); salvar(); return; }
+    if (painelAberto) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); proximo(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); anterior(); }
+  });
+
+  /* Ctrl + roda do mouse: muda a letra */
+  window.addEventListener("wheel", function (e) {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    fonte(e.deltaY < 0 ? 2 : -2);
+  }, { passive: false });
+
+  /* ---------- Toque: deslizar para trocar de capítulo ---------- */
+  var toque = null;
+  $("leitura").addEventListener("touchstart", function (e) {
+    if (e.touches.length === 1) toque = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  $("leitura").addEventListener("touchend", function (e) {
+    if (!toque) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - toque.x, dy = t.clientY - toque.y;
+    toque = null;
+    if (Math.abs(dx) > 90 && Math.abs(dy) < 60) { if (dx < 0) proximo(); else anterior(); }
+  }, { passive: true });
+
+  /* ---------- Mensagens do motor ---------- */
+  if (ponte) {
+    ponte.addEventListener("message", function (ev) {
+      var m = ev.data;
+      if (!m || !m.tipo) return;
+      if (m.tipo === "init") {
+        L.at = m.at; L.nt = m.nt;
+        E = m.estado;
+        aplicarTema(); aplicarFonte();
+        abrir(E.t, E.b, E.c);
+      } else if (m.tipo === "capitulo") {
+        if (m.t === E.t && m.b === E.b && m.c === E.c) mostrar(m);
+      }
+    });
+    enviar("init");
+  } else {
+    $("onde").textContent = "Abra pelo programa biblia";
+  }
+})();
+</script>
+</body>
+</html>
