@@ -1,5 +1,31 @@
 # Bíblia Almeida ARC-1911 — Aplicativo para Linux
 
+## 📥 [BAIXAR PARA LINUX (clique aqui)](https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux/releases/latest/download/BibliaARC1911-Linux.tar.gz)
+
+**Gratuito • Sem anúncios • Funciona sem internet • Sempre a versão mais nova**
+
+Ou aponte a câmera do celular para o código abaixo e envie o link para o seu computador:
+
+<img src="docs/qr-baixar-linux.png" alt="QR code para baixar o aplicativo para Linux" width="200">
+
+**Usar em 3 passos:**
+
+1. Clique em **BAIXAR PARA LINUX** acima. O arquivo `BibliaARC1911-Linux.tar.gz` será baixado.
+2. Na pasta *Downloads*, clique com o botão direito no arquivo → **Extrair aqui**.
+3. Abra a pasta `BibliaARC1911` e dê **dois cliques** em **`biblia`** (se perguntar, escolha **Executar**).
+
+> Não abriu? Abra o Terminal e instale a peça que falta (uma vez só): `sudo apt install -y libwebkit2gtk-4.1-0`
+>
+> O programa pronto é para **Ubuntu 26.04 ou mais novo**. Em versões mais antigas, use o jeito de compilar, mais abaixo.
+
+**Compartilhe com quem precisa:** copie e envie este link:
+
+```
+https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux/releases/latest/download/BibliaARC1911-Linux.tar.gz
+```
+
+---
+
 Aplicativo **gratuito, leve e 100% offline** da Bíblia **Almeida 1911 (Domínio Público)**, com atualização ortográfica e gramatical realizada em **11/2026** para o Português do Brasil.
 
 Feito para quem quer ler a Palavra **sem distrações**: tela limpa, letra grande, botões simples. Se a pessoa sabe ler, ela sabe usar.
@@ -20,7 +46,7 @@ Feito para quem quer ler a Palavra **sem distrações**: tela limpa, letra grand
 
 ---
 
-## Como instalar e abrir (Ubuntu, Debian, Linux Mint e parecidos)
+## Compilar você mesmo (Ubuntu, Debian, Linux Mint e parecidos, inclusive versões antigas)
 
 1. Abra o **Terminal** e instale o que o app precisa (uma vez só):
 
@@ -96,6 +122,7 @@ textos/*.md  ->  motor/motor.biblia.c  ->  src/app_linux.c (janela GTK)  ->  ui/
 | `ui/index.html` | Visual do aplicativo (HTML, CSS e JavaScript) |
 | `textos/` | Os 66 livros (1189 capítulos), texto base da Almeida 1911 |
 | `compilar.sh` | Gera o programa `biblia` |
+| `empacotar.sh` | Gera o `BibliaARC1911-Linux.tar.gz` para anexar na release |
 
 ---
 
