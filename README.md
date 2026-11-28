@@ -21,16 +21,20 @@ https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux/releases/la
 ## Guia para iniciantes
 
 Funciona no **Ubuntu 24.04 ou mais novo** (e em Linux parecidos, como Linux Mint 22 e Debian 13).
-Não precisa de senha. Não precisa de internet depois de baixar.
+Não precisa de internet depois de baixar.
 
 ### É seguro?
 
-**Sim.**
+O que dá para garantir:
 
-* **Código aberto.** Todo o código e os textos dos 66 livros estão nesta página. Qualquer pessoa pode ler.
-* **Não coleta dados.** Sem cadastro, sem conta, sem anúncios, sem rastreamento.
-* **Não usa a internet sozinho.** Só quando **você** clica em **ENVIAR** ou em **Abrir GitHub**.
-* **Não pede senha.** Ele não mexe no sistema. Fica só na sua pasta pessoal.
+* **O código está público no GitHub.** Todo o código e os textos dos 66 livros estão nesta página. Qualquer pessoa pode ler e conferir.
+* **Funciona sem internet.** Não usa a internet sozinho. Só quando **você** clica em **ENVIAR** ou em **Abrir GitHub**.
+* **Não coleta dados.** Sem cadastro, sem conta, sem rastreamento.
+* **Sem anúncios.**
+* **O aplicativo nunca pede senha.** Ele não mexe no sistema e fica só na sua pasta pessoal.
+  Mas, se faltar uma peça do sistema, o comando para instalá-la (`sudo apt install -y libwebkit2gtk-4.1-0`) **pede a senha do computador**. Isso é normal: é o Linux instalando a peça, não o aplicativo.
+
+Todo programa pode ter falhas. Se achar alguma, avise na aba **Issues** desta página.
 
 **Conferir se o arquivo baixado é o original (opcional):**
 
@@ -43,7 +47,9 @@ sha256sum ~/Downloads/BibliaARC1911-Linux.tar.gz
 
 3. Vai aparecer um código longo de letras e números.
 4. Compare com o código **SHA-256** escrito na página da versão ([Releases](https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux/releases/latest)).
-5. Se for igual, o arquivo é o original. Se for diferente, apague e baixe de novo por aqui.
+5. Se for igual, o arquivo é o original, igual ao que está no GitHub. Se for diferente, apague e baixe de novo por aqui.
+
+> O código SHA-256 só prova que o arquivo não foi trocado nem estragou no caminho. Ele não prova que o programa não tem falhas.
 
 > Se a sua pasta se chama *Transferências*, troque `Downloads` por `Transferências` no comando.
 
@@ -203,7 +209,6 @@ textos/*.md  ->  kernel/biblia_kernel.c (gerado de motor/motor.biblia.c)  ->  sr
 | `compilar.sh` | Gera o programa `biblia` |
 | `empacotar.sh` | Gera o `BibliaARC1911-Linux.tar.gz` para anexar na release |
 | `instalar-menu.sh` / `desinstalar.sh` | Põem e tiram o app do menu, sem senha |
-| `flatpak/` | Arquivos para publicar no Flathub (veja `flatpak/LEIAME.md`) |
 
 ---
 
