@@ -5,13 +5,14 @@ set -e
 cd "$(dirname "$0")"
 mkdir -p build
 
-# 1. Motor (o mesmo do terminal). O main() do terminal é renomeado e não é usado.
-gcc -O2 -Wall -Wextra -Wno-unused-result -Dmain=motor_main_terminal -c motor/motor.biblia.c -o build/motor.o
+# 1. Kernel da Bíblia (28/11/2026). Gerado a partir de motor/motor.biblia.c; mesmo texto, mais rápido.
+#    Para mudar uma regra: edite motor/motor.biblia.c e gere o kernel de novo (veja kernel/LEIAME.md).
+gcc -O2 -Wall -Wextra -c kernel/biblia_kernel.c -o build/kernel.o
 
 # 2. Janela do aplicativo
 gcc -O2 -Wall -Wextra -c src/app_linux.c -o build/app.o $(pkg-config --cflags gtk+-3.0 webkit2gtk-4.1)
 
 # 3. Juntar tudo
-gcc -o biblia build/app.o build/motor.o $(pkg-config --libs gtk+-3.0 webkit2gtk-4.1)
+gcc -o biblia build/app.o build/kernel.o $(pkg-config --libs gtk+-3.0 webkit2gtk-4.1)
 
 echo "Pronto: $(pwd)/biblia"

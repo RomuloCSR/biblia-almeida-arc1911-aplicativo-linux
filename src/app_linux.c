@@ -18,18 +18,19 @@
 #include <sys/stat.h>
 
 /* ---------------------------------------------------------------------------
-- 1. MOTOR (o mesmo do terminal, ligado em C)
+- 1. KERNEL DA BÍBLIA (28/11/2026)
+-    Antes o app ligava o motor.biblia.c inteiro. Agora usa o kernel (kernel/),
+-    gerado a partir do mesmo motor: o texto sai igual, byte a byte, ~12x mais rápido.
+-    As regras continuam sendo escritas no motor/motor.biblia.c; o kernel é gerado dele.
+-    Livros: 0..38 = Antigo Testamento, 39..65 = Novo Testamento.
 - --------------------------------------------------------------------------- */
-extern const char *pastas_at[39];
-extern const char *pastas_nt[27];
-extern const char *nomes_at[39];
-extern const char *nomes_nt[27];
-extern const int capitulos_at[39];
-extern const int capitulos_nt[27];
-void limpar_texto_verso(const char *origem, char *destino);
-void atualizar_ortografia(char *texto);
+#include "../kernel/biblia_kernel.h"
 
-#define MAX_LINHA_APP 8192
+static int livro_global(int testamento, int livro) {
+    if (testamento == 1 && livro >= 0 && livro < 39) return livro;
+    if (testamento == 2 && livro >= 0 && livro < 27) return 39 + livro;
+    return -1;
+}
 
 static GtkWidget *g_janela = NULL;
 static WebKitWebView *g_web = NULL;
@@ -71,7 +72,7 @@ static void pasta_do_programa(void) {
 static void escolher_pasta_dados(void) {
     snprintf(g_pasta_dados, sizeof(g_pasta_dados), "%s/dados", g_pasta_app);
     mkdir(g_pasta_dados, 0755);
-    char teste[PATH_MAX + 16];
+    char teste[PATH_MAX + 64];
     snprintf(teste, sizeof(teste), "%s/.teste", g_pasta_dados);
     FILE *f = fopen(teste, "w");
     if (f) { fclose(f); remove(teste); return; }
@@ -80,13 +81,34 @@ static void escolher_pasta_dados(void) {
 }
 
 /* ---------------------------------------------------------------------------
-- 3. LEITURA DE CAPÍTULO (mesma lógica do terminal, do Android e do Windows)
+- 3. LEITURA DE CAPÍTULO (28/11/2026: feita pelo kernel, bk_capitulo)
+-    O kernel lê as linhas do .md como o terminal (tira BOM, ignora linha longa demais),
+-    limpa o Markdown e atualiza a ortografia. Aqui só montamos o JSON de cada item.
+-    Sem buffers static: pode ser chamado de qualquer thread.
 - --------------------------------------------------------------------------- */
+typedef struct { GString *s; gboolean primeiro; } SaidaJson;
+
+static int item_json(void *ctx, int tipo, int numero, const char *texto, size_t tamanho_texto) {
+    (void)tamanho_texto;
+    SaidaJson *o = (SaidaJson *)ctx;
+    if (!o->primeiro) g_string_append_c(o->s, ',');
+    if (tipo == BK_VERSO) {
+        char num[16];
+        g_snprintf(num, sizeof(num), "%d", numero);
+        g_string_append(o->s, "{\"n\":"); json_texto(o->s, num);
+        g_string_append(o->s, ",\"t\":"); json_texto(o->s, texto);
+    } else {
+        g_string_append(o->s, "{\"s\":"); json_texto(o->s, texto);
+    }
+    g_string_append_c(o->s, '}');
+    o->primeiro = FALSE;
+    return 0;
+}
+
 static char *capitulo_json(int t, int b, int c) {
-    const char *pasta = NULL;
-    int total = 0;
-    if (t == 1 && b >= 0 && b < 39) { pasta = pastas_at[b]; total = capitulos_at[b]; }
-    if (t == 2 && b >= 0 && b < 27) { pasta = pastas_nt[b]; total = capitulos_nt[b]; }
+    int g = livro_global(t, b);
+    const char *pasta = g >= 0 ? bk_livro_pasta(g) : NULL;
+    int total = g >= 0 ? bk_livro_capitulos(g) : 0;
 
     GString *s = g_string_new(NULL);
     g_string_append_printf(s, "{\"tipo\":\"capitulo\",\"t\":%d,\"b\":%d,\"c\":%d,\"versos\":[", t, b, c);
@@ -97,56 +119,18 @@ static char *capitulo_json(int t, int b, int c) {
 
     char caminho[PATH_MAX + 64];
     gchar *conteudo = NULL;
+    gsize tamanho = 0;
     snprintf(caminho, sizeof(caminho), "%s/textos/%s/%02d.md", g_pasta_app, pasta, c);
-    if (!g_file_get_contents(caminho, &conteudo, NULL, NULL)) {
+    if (!g_file_get_contents(caminho, &conteudo, &tamanho, NULL)) {
         snprintf(caminho, sizeof(caminho), "%s/textos/%s/%03d.md", g_pasta_app, pasta, c);
-        if (!g_file_get_contents(caminho, &conteudo, NULL, NULL)) {
+        if (!g_file_get_contents(caminho, &conteudo, &tamanho, NULL)) {
             g_string_append(s, "],\"erro\":\"Arquivo do capítulo não encontrado. Verifique a pasta textos.\"}");
             return g_string_free(s, FALSE);
         }
     }
 
-    static char linha[MAX_LINHA_APP];
-    static char limpo[MAX_LINHA_APP];
-    gboolean primeiro = TRUE;
-    const char *cur = conteudo;
-
-    while (*cur) {
-        const char *fim = strchr(cur, '\n');
-        size_t len = fim ? (size_t)(fim - cur) : strlen(cur);
-        if (len >= MAX_LINHA_APP - 1) len = MAX_LINHA_APP - 2;
-        memcpy(linha, cur, len);
-        linha[len] = '\0';
-        cur = fim ? fim + 1 : cur + len;
-
-        if (strncmp(linha, "---", 3) == 0) break;
-        if (linha[0] == '#' || linha[0] == '[') continue;
-
-        int idx = 0;
-        while (linha[idx] == '*' || linha[idx] == ' ') idx++;
-
-        if (linha[idx] >= '1' && linha[idx] <= '9') {
-            char num[20];
-            int v = 0;
-            while (linha[idx] >= '0' && linha[idx] <= '9' && v < 19) num[v++] = linha[idx++];
-            num[v] = '\0';
-            while (linha[idx] == '*' || linha[idx] == ' ') idx++;
-            limpar_texto_verso(&linha[idx], limpo);
-            atualizar_ortografia(limpo);
-            if (!primeiro) g_string_append_c(s, ',');
-            g_string_append(s, "{\"n\":"); json_texto(s, num);
-            g_string_append(s, ",\"t\":"); json_texto(s, limpo);
-            g_string_append_c(s, '}');
-            primeiro = FALSE;
-        } else if (strncmp(linha, "**", 2) == 0 && linha[idx] != '\0' && linha[idx] != '\r') {
-            limpar_texto_verso(&linha[idx], limpo);
-            atualizar_ortografia(limpo);
-            if (!primeiro) g_string_append_c(s, ',');
-            g_string_append(s, "{\"s\":"); json_texto(s, limpo);
-            g_string_append_c(s, '}');
-            primeiro = FALSE;
-        }
-    }
+    SaidaJson o = { s, TRUE };
+    bk_capitulo(conteudo, (size_t)tamanho, item_json, &o);
     g_free(conteudo);
     g_string_append(s, "]}");
     return g_string_free(s, FALSE);
@@ -172,7 +156,7 @@ static Estado ler_estado(void) {
     if (e.t != 1 && e.t != 2) e.t = 1;
     int max_livro = e.t == 1 ? 39 : 27;
     if (e.b < 0 || e.b >= max_livro) e.b = 0;
-    int max_cap = e.t == 1 ? capitulos_at[e.b] : capitulos_nt[e.b];
+    int max_cap = bk_livro_capitulos(livro_global(e.t, e.b));
     if (e.c < 1 || e.c > max_cap) e.c = 1;
     if (e.fonte < 14 || e.fonte > 40) e.fonte = 20;
     if (strcmp(e.tema, "claro") && strcmp(e.tema, "sepia") && strcmp(e.tema, "escuro")) strcpy(e.tema, "claro");
@@ -193,14 +177,14 @@ static char *init_json(void) {
     GString *s = g_string_new("{\"tipo\":\"init\",\"at\":[");
     for (int i = 0; i < 39; i++) {
         if (i) g_string_append_c(s, ',');
-        g_string_append(s, "{\"n\":"); json_texto(s, nomes_at[i]);
-        g_string_append_printf(s, ",\"c\":%d}", capitulos_at[i]);
+        g_string_append(s, "{\"n\":"); json_texto(s, bk_livro_nome(i));
+        g_string_append_printf(s, ",\"c\":%d}", bk_livro_capitulos(i));
     }
     g_string_append(s, "],\"nt\":[");
     for (int i = 0; i < 27; i++) {
         if (i) g_string_append_c(s, ',');
-        g_string_append(s, "{\"n\":"); json_texto(s, nomes_nt[i]);
-        g_string_append_printf(s, ",\"c\":%d}", capitulos_nt[i]);
+        g_string_append(s, "{\"n\":"); json_texto(s, bk_livro_nome(39 + i));
+        g_string_append_printf(s, ",\"c\":%d}", bk_livro_capitulos(39 + i));
     }
     Estado e = ler_estado();
     g_string_append_printf(s, "],\"estado\":{\"t\":%d,\"b\":%d,\"c\":%d,\"fonte\":%d,\"tema\":", e.t, e.b, e.c, e.fonte);
@@ -233,7 +217,8 @@ static void compartilhar(const char *destino, const char *ref, const char *texto
     if (strlen(corpo_cod) > 1800) {
         g_free(corpo_cod);
         corpo = g_strdup_printf("%s\n\n(O texto completo foi copiado. Cole aqui com Ctrl+V.)\n\n"
-                                "Bíblia Almeida ARC-1911 — https://github.com/RomuloCSR", ref);
+                                "Bíblia Almeida ARC-1911 — https://github.com/RomuloCSR\n"
+                                "Doação espontânea para a obra via PIX: 21980934118", ref);
         corpo_cod = g_uri_escape_string(corpo, NULL, FALSE);
     }
     gchar *url = NULL;
