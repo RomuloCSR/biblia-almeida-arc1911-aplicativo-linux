@@ -1,0 +1,13 @@
+# Arquivos do Linux sempre com fim de linha LF (28/11/2026).
+# Por quê: com CRLF o bash falha ao rodar os scripts.
+*.sh      text eol=lf
+*.desktop text eol=lf
+*.yml     text eol=lf
+*.xml     text eol=lf
+*.svg     text eol=lf
+*.png     binary
+
+# Tela do aplicativo também em LF (28/11/2026).
+# Por quê: no Windows o git trocava para CRLF e o pacote saía com CRLF.
+# Os capítulos (*.md) ficam de fora de propósito: não mexer nos textos.
+ui/*.html text eol=lf
