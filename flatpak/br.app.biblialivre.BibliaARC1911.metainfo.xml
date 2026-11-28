@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Descrição do app para o Flathub e lojas do Linux (28/11/2026) -->
+<component type="desktop-application">
+  <id>br.app.biblialivre.BibliaARC1911</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <!-- PENDENTE: o repositório ainda não tem arquivo LICENSE.
+       O dono do projeto precisa escolher a licença do código e colocar aqui,
+       por exemplo: <project_license>IDENTIFICADOR-SPDX</project_license>.
+       O Flathub exige este campo. -->
+  <name>Bíblia Almeida ARC-1911</name>
+  <name xml:lang="en">Almeida ARC-1911 Bible</name>
+  <summary>Leia a Bíblia Almeida 1911 sem internet</summary>
+  <summary xml:lang="en">Read the Portuguese Almeida 1911 Bible offline</summary>
+  <developer id="io.github.romulocsr">
+    <name>Romulo CSR</name>
+  </developer>
+  <description>
+    <p>Aplicativo gratuito e leve da Bíblia Almeida 1911 (domínio público), com a grafia atualizada para o português do Brasil em 11/2026.</p>
+    <p xml:lang="en">A free and lightweight app for the Portuguese Almeida 1911 Bible (public domain), with spelling updated to current Brazilian Portuguese in 11/2026.</p>
+    <ul>
+      <li>Os 66 livros e 1189 capítulos já vêm dentro do app: funciona sem internet</li>
+      <li xml:lang="en">All 66 books and 1189 chapters are included: works offline</li>
+      <li>Tela limpa, letra grande e botões simples</li>
+      <li xml:lang="en">Clean screen, large text and simple buttons</li>
+      <li>Temas claro, sépia e escuro</li>
+      <li xml:lang="en">Light, sepia and dark themes</li>
+      <li>Envie um versículo por WhatsApp, Telegram ou e-mail</li>
+      <li xml:lang="en">Share a verse by WhatsApp, Telegram or e-mail</li>
+      <li>Sem anúncios, sem cadastro e sem coleta de dados</li>
+      <li xml:lang="en">No ads, no sign-up and no data collection</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">br.app.biblialivre.BibliaARC1911.desktop</launchable>
+  <url type="homepage">https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux</url>
+  <url type="bugtracker">https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux/issues</url>
+  <url type="vcs-browser">https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Leitura de um capítulo</caption>
+      <caption xml:lang="en">Reading a chapter</caption>
+      <image>https://raw.githubusercontent.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux/main/docs/tela-principal.png</image>
+    </screenshot>
+  </screenshots>
+  <categories>
+    <category>Education</category>
+    <category>Literature</category>
+  </categories>
+  <keywords>
+    <keyword>Bíblia</keyword>
+    <keyword>Almeida</keyword>
+    <keyword xml:lang="en">Bible</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <releases>
+    <release version="1.3" date="2026-11-28">
+      <description>
+        <p>Guia simples para iniciantes, instalação no menu com um clique e ícone novo.</p>
+        <p xml:lang="en">Simple beginner guide, one-click menu install and a new icon.</p>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -1,0 +1,45 @@
+# Manifesto Flatpak da Bíblia Almeida ARC-1911 (28/11/2026)
+# O quê: receita para o Flathub compilar o aplicativo a partir do código-fonte.
+# Por quê: o Flathub não aceita programa pronto; ele compila tudo do zero.
+# Usa o compilar.sh do próprio projeto. Os textos (textos/*.md) vão dentro do app,
+# então ele funciona sem internet.
+app-id: br.app.biblialivre.BibliaARC1911
+# GNOME 51: runtime atual em 11/2026; já traz GTK 3 e WebKitGTK 4.1 (webkit2gtk-4.1).
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+command: biblia-arc1911
+
+# Permissões mínimas: só janela e placa de vídeo.
+# Sem rede: ENVIAR e "Abrir GitHub" abrem o navegador pelo portal do sistema.
+# Sem acesso às pastas da pessoa: "onde parou" fica em ~/.var/app/<app-id>/data.
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+
+modules:
+  - name: biblia-arc1911
+    buildsystem: simple
+    build-commands:
+      # 1. Compilar com o script do projeto (kernel em C + janela GTK)
+      - ./compilar.sh
+      # 2. Programa, tela e textos ficam juntos: o app procura ui/ e textos/ ao lado dele
+      - install -Dm755 biblia /app/lib/biblia-arc1911/biblia
+      - cp -r ui textos /app/lib/biblia-arc1911/
+      - mkdir -p /app/bin
+      - ln -s ../lib/biblia-arc1911/biblia /app/bin/biblia-arc1911
+      # 3. Atalho, ícone e descrição para a loja
+      - install -Dm644 flatpak/br.app.biblialivre.BibliaARC1911.desktop /app/share/applications/br.app.biblialivre.BibliaARC1911.desktop
+      - install -Dm644 flatpak/br.app.biblialivre.BibliaARC1911.svg /app/share/icons/hicolor/scalable/apps/br.app.biblialivre.BibliaARC1911.svg
+      - install -Dm644 flatpak/br.app.biblialivre.BibliaARC1911.metainfo.xml /app/share/metainfo/br.app.biblialivre.BibliaARC1911.metainfo.xml
+    sources:
+      # Para testar no seu computador antes da release, troque por:
+      #   - type: dir
+      #     path: ..
+      - type: git
+        url: https://github.com/RomuloCSR/biblia-almeida-arc1911-aplicativo-linux.git
+        tag: v1.3
+        # O Flathub pede também o commit exato da tag. Preencha depois de criar a release:
+        # commit: <sha completo do commit da tag v1.3>
